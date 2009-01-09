@@ -21,7 +21,7 @@
 */
 #include "SDL_config.h"
 
-#ifdef SDL_JOYSTICK_GAMECUBE
+#ifdef SDL_JOYSTICK_WII
 
 #include "SDL_events.h"
 #include "SDL_joystick.h"

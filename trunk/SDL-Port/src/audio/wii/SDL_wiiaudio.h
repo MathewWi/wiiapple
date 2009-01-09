@@ -21,13 +21,20 @@
 */
 #include "SDL_config.h"
 
-#include "SDL_mouse.h"
-#include "../../events/SDL_events_c.h"
+#ifndef _SDL_wiiaudio_h
+#define _SDL_wiiaudio_h
 
-#include "SDL_gamecubemouse_c.h"
+#include "../SDL_sysaudio.h"
 
+/* Hidden "this" pointer for the video functions */
+#define _THIS	SDL_AudioDevice *this
 
-/* The implementation dependent data for the window manager cursor */
-struct WMcursor {
-	int unused;
+struct SDL_PrivateAudioData {
+	/* The file descriptor for the audio device */
+	Uint8 *mixbuf;
+	Uint32 mixlen;
+	Uint32 write_delay;
+	Uint32 initial_calls;
 };
+
+#endif /* _SDL_dummyaudio_h */

@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2006 Sam Lantinga
+    Copyright (C) 1997-2009 Sam Lantinga
 
     This library is SDL_free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -162,8 +162,8 @@ extern AudioBootStrap DISKAUD_bootstrap;
 #if SDL_AUDIO_DRIVER_DUMMY
 extern AudioBootStrap DUMMYAUD_bootstrap;
 #endif
-#if SDL_AUDIO_DRIVER_GAMECUBE
-extern AudioBootStrap GAMECUBEAUD_bootstrap;
+#if SDL_AUDIO_DRIVER_WII
+extern AudioBootStrap WIIAUD_bootstrap;
 #endif
 #if SDL_AUDIO_DRIVER_DC
 extern AudioBootStrap DCAUD_bootstrap;

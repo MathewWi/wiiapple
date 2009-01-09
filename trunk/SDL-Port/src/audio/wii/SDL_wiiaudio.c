@@ -30,10 +30,10 @@
 #include "../SDL_sysaudio.h"
 #include "../SDL_audio_c.h"
 
-// GameCube audio internal includes.
+// Wii audio internal includes.
 #include <ogc/audio.h>
 #include <ogc/cache.h>
-#include "SDL_gamecubeaudio.h"
+#include "SDL_wiiaudio.h"
 
 #define ALIGNED(x) __attribute__((aligned(x)));
 //#define SAMPLES_PER_DMA_BUFFER 8192
@@ -42,7 +42,7 @@
 typedef Uint32 Sample;
 typedef Sample DMABuffer[SAMPLES_PER_DMA_BUFFER];
 
-static const char	GAMECUBEAUD_DRIVER_NAME[] = "gamecube";
+static const char	WIIAUD_DRIVER_NAME[] = "wii";
 static DMABuffer	dma_buffers[2] ALIGNED(32);
 static size_t		current_dma_buffer = 0;
 static Sample		silence[SAMPLES_PER_DMA_BUFFER] ALIGNED(32);
@@ -69,7 +69,7 @@ static void StartDMA(void)
 			// printf("\tlen_cvt    = %d\n", current_audio->convert.len_cvt);
 			// printf("\tlen_mult   = %d\n", current_audio->convert.len_mult);
 			// printf("\tlen_ratio  = %f\n", (float) current_audio->convert.len_ratio);
-
+			
 			//SDL_mutexP(this->mixer_lock);
 			// Get the client to produce audio.
 			current_audio->spec.callback(
@@ -114,7 +114,7 @@ static void StartDMA(void)
 	}
 	else
 	{
-		AUDIO_StopDMA();
+	    	AUDIO_StopDMA();
 		// Set up the DMA.
 		AUDIO_InitDMA((Uint32) silence, sizeof(silence));
 		DCFlushRange(silence, sizeof(silence));
@@ -124,7 +124,7 @@ static void StartDMA(void)
 	AUDIO_StartDMA();
 }
 
-static int GAMECUBEAUD_OpenAudio(_THIS, SDL_AudioSpec *spec)
+static int WIIAUD_OpenAudio(_THIS, SDL_AudioSpec *spec)
 {
 	// Set up actual spec.
 	spec->freq		= 32000;
@@ -134,7 +134,7 @@ static int GAMECUBEAUD_OpenAudio(_THIS, SDL_AudioSpec *spec)
 	spec->padding	= 0;
 	SDL_CalculateAudioSpec(spec);
 
-	// Initialise the GameCube side of the audio system.
+	// Initialise the Wii side of the audio system.
 	AUDIO_Init(0);
 	AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
 	AUDIO_RegisterDMACallback(StartDMA);
@@ -148,7 +148,7 @@ static int GAMECUBEAUD_OpenAudio(_THIS, SDL_AudioSpec *spec)
 	return 1;
 }
 
-static void GAMECUBEAUD_CloseAudio(_THIS)
+static void WIIAUD_CloseAudio(_THIS)
 {
 	// Forget the DMA callback.
 	AUDIO_RegisterDMACallback(0);
@@ -157,13 +157,13 @@ static void GAMECUBEAUD_CloseAudio(_THIS)
 	AUDIO_StopDMA();
 }
 
-static void GAMECUBEAUD_DeleteDevice(SDL_AudioDevice *device)
+static void WIIAUD_DeleteDevice(SDL_AudioDevice *device)
 {
 	SDL_free(device->hidden);
 	SDL_free(device);
 }
 
-static SDL_AudioDevice *GAMECUBEAUD_CreateDevice(int devindex)
+static SDL_AudioDevice *WIIAUD_CreateDevice(int devindex)
 {
 	SDL_AudioDevice *this;
 
@@ -184,19 +184,19 @@ static SDL_AudioDevice *GAMECUBEAUD_CreateDevice(int devindex)
 	SDL_memset(this->hidden, 0, (sizeof *this->hidden));
 
 	/* Set the function pointers */
-	this->OpenAudio = GAMECUBEAUD_OpenAudio;
-	this->CloseAudio = GAMECUBEAUD_CloseAudio;
-	this->free = GAMECUBEAUD_DeleteDevice;
+	this->OpenAudio = WIIAUD_OpenAudio;
+	this->CloseAudio = WIIAUD_CloseAudio;
+	this->free = WIIAUD_DeleteDevice;
 
 	return this;
 }
 
-static int GAMECUBEAUD_Available(void)
+static int WIIAUD_Available(void)
 {
 	return 1;
 }
 
-AudioBootStrap GAMECUBEAUD_bootstrap = {
-	GAMECUBEAUD_DRIVER_NAME, "SDL GameCube audio driver",
-	GAMECUBEAUD_Available, GAMECUBEAUD_CreateDevice
+AudioBootStrap WIIAUD_bootstrap = {
+	WIIAUD_DRIVER_NAME, "SDL Wii audio driver",
+	WIIAUD_Available, WIIAUD_CreateDevice
 };

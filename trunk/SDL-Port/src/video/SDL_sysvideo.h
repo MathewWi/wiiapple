@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2006 Sam Lantinga
+    Copyright (C) 1997-2009 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -404,8 +404,8 @@ extern VideoBootStrap OS2FSLib_bootstrap;
 #if SDL_VIDEO_DRIVER_AALIB
 extern VideoBootStrap AALIB_bootstrap;
 #endif
-#if SDL_VIDEO_DRIVER_GAMECUBE
-extern VideoBootStrap GAMECUBE_bootstrap;
+#if SDL_VIDEO_DRIVER_WII
+extern VideoBootStrap WII_bootstrap;
 #endif
 #if SDL_VIDEO_DRIVER_DUMMY
 extern VideoBootStrap DUMMY_bootstrap;

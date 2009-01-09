@@ -21,13 +21,6 @@
 */
 #include "SDL_config.h"
 
-#include "SDL_gamecubevideo.h"
+#include "SDL_wiivideo.h"
 
-/* Variables and functions exported by SDL_sysevents.c to other parts 
-   of the native video subsystem (SDL_sysvideo.c)
-*/
-extern void GAMECUBE_InitOSKeymap(_THIS);
-extern void GAMECUBE_PumpEvents(_THIS);
-
-/* end of SDL_gamecubeevents_c.h ... */
-
+/* Functions to be exported */

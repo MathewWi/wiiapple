@@ -25,8 +25,8 @@
 #include "../../events/SDL_events_c.h"
 #include <wiiuse/wpad.h>
 
-#include "SDL_gamecubevideo.h"
-#include "SDL_gamecubeevents_c.h"
+#include "SDL_wiivideo.h"
+#include "SDL_wiievents_c.h"
 
 int lastX = 0;
 int lastY = 0;
@@ -243,7 +243,7 @@ void initkeymap()
 
 static int keyboard_initialized =0;
 
-void gamecube_keyboard_init()
+void wii_keyboard_init()
 {
 	if (!keyboard_initialized) {
 		//printf("init keyboard");
@@ -273,12 +273,12 @@ void gamecube_keyboard_init()
 }
 
 
-void GAMECUBE_PumpEvents(_THIS)
+void WII_PumpEvents(_THIS)
 {       
 	WPAD_ScanPads();
 /*
 	if (!keyboard_initialized) {
-		gamecube_keyboard_init();
+		wii_keyboard_init();
 		keyboard_initialized = 1;
 	}
 */
@@ -356,7 +356,7 @@ void GAMECUBE_PumpEvents(_THIS)
 
 
 
-void GAMECUBE_InitOSKeymap(_THIS)
+void WII_InitOSKeymap(_THIS)
 {
 //	int i;
 

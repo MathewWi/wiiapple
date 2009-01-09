@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2006 Sam Lantinga
+    Copyright (C) 1997-2009 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -46,8 +46,8 @@
 #define __FREEBSD__	1
 #endif
 #if defined(GEKKO)
-#undef __GAMECUBE__
-#define __GAMECUBE__	1
+#undef __WII__
+#define __WII__	1
 #endif
 #if defined(hpux) || defined(__hpux) || defined(__hpux__)
 #undef __HPUX__

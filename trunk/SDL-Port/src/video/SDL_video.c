@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2006 Sam Lantinga
+    Copyright (C) 1997-2009 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -120,8 +120,8 @@ static VideoBootStrap *bootstrap[] = {
 #if SDL_VIDEO_DRIVER_AALIB
 	&AALIB_bootstrap,
 #endif
-#if SDL_VIDEO_DRIVER_GAMECUBE
-	&GAMECUBE_bootstrap,
+#if SDL_VIDEO_DRIVER_WII
+	&WII_bootstrap,
 #endif
 #if SDL_VIDEO_DRIVER_DUMMY
 	&DUMMY_bootstrap,
@@ -507,7 +507,7 @@ static void SDL_ClearSurface(SDL_Surface *surface)
 		SDL_FillRect(surface, NULL, black);
 	}
 	if (surface->flags&SDL_FULLSCREEN) {
-	SDL_Flip(surface);
+		SDL_Flip(surface);
 	}
 }
 

@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2006 Sam Lantinga
+    Copyright (C) 1997-2009 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -43,8 +43,8 @@
 #include "win32/SDL_systhread_c.h"
 #elif SDL_THREAD_SYMBIAN
 #include "symbian/SDL_systhread_c.h"
-#elif SDL_THREAD_GAMECUBE
-#include "gamecube/SDL_systhread_c.h"
+#elif SDL_THREAD_WII
+#include "wii/SDL_systhread_c.h"
 #else
 #error Need thread implementation for this platform
 #include "generic/SDL_systhread_c.h"

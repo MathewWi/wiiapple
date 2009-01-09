@@ -28,11 +28,11 @@ slouken@libsdl.org
 #include "../SDL_sysvideo.h"
 #include "../SDL_pixels_c.h"
 
-// SDL GameCube specifics.
-#include "SDL_gamecubevideo.h"
-#include "SDL_gamecubeevents_c.h"
+// SDL Wii specifics.
+#include "SDL_wiivideo.h"
+#include "SDL_wiievents_c.h"
 
-static const char	GAMECUBEVID_DRIVER_NAME[] = "gamecube";
+static const char	WIIVID_DRIVER_NAME[] = "wii";
 static unsigned int	y_gamma[256];
 
 static SDL_Rect mode_320;
@@ -45,7 +45,7 @@ static SDL_Rect* modes_descending[] =
 	NULL
 };
 
-int GAMECUBE_VideoInit(_THIS, SDL_PixelFormat *vformat)
+int WII_VideoInit(_THIS, SDL_PixelFormat *vformat)
 {
 	unsigned int y;
 
@@ -69,12 +69,12 @@ int GAMECUBE_VideoInit(_THIS, SDL_PixelFormat *vformat)
 	return(0);
 }
 
-SDL_Rect **GAMECUBE_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags)
+SDL_Rect **WII_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags)
 {
 	return &modes_descending[0];
 }
 
-static inline GameCube_Y1CBY2CR PackY1CBY2CR(unsigned int y1, unsigned int cb, unsigned int y2, unsigned int cr)
+static inline Wii_Y1CBY2CR PackY1CBY2CR(unsigned int y1, unsigned int cb, unsigned int y2, unsigned int cr)
 {
 	return (y1 << 24) | (cb << 16) | (y2 << 8) | cr;
 }
@@ -95,10 +95,10 @@ static inline unsigned int CalculateCR(unsigned int r, unsigned int g, unsigned 
 	return (50000 * r - 41869 * g - 8131 * b + 12800000) / 100000;
 }
 
-static void UpdateRow_8_1(const void* const src_start, const void* const src_end, GameCube_Y1CBY2CR* const dst_start, const GameCube_PackedPalette* palette)
+static void UpdateRow_8_1(const void* const src_start, const void* const src_end, Wii_Y1CBY2CR* const dst_start, const Wii_PackedPalette* palette)
 {
 	const Uint8*		src	= src_start;
-	GameCube_Y1CBY2CR*	dst	= dst_start;
+	Wii_Y1CBY2CR*	dst	= dst_start;
 	while (src != src_end)
 	{
 		const unsigned int left = *src++;
@@ -107,10 +107,10 @@ static void UpdateRow_8_1(const void* const src_start, const void* const src_end
 	}
 }
 
-static void UpdateRow_8_2(const void* const src_start, const void* const src_end, GameCube_Y1CBY2CR* const dst_start, const GameCube_PackedPalette* palette)
+static void UpdateRow_8_2(const void* const src_start, const void* const src_end, Wii_Y1CBY2CR* const dst_start, const Wii_PackedPalette* palette)
 {
 	const Uint8*		src	= src_start;
-	GameCube_Y1CBY2CR*	dst	= dst_start;
+	Wii_Y1CBY2CR*	dst	= dst_start;
 	while (src != src_end)
 	{
 		const unsigned int	left	= *src++;
@@ -120,7 +120,7 @@ static void UpdateRow_8_2(const void* const src_start, const void* const src_end
 	}
 }
 
-static inline GameCube_Y1CBY2CR PackRGBs(
+static inline Wii_Y1CBY2CR PackRGBs(
 	unsigned int r1, unsigned int g1, unsigned int b1,
 	unsigned int r2, unsigned int g2, unsigned int b2)
 {
@@ -135,10 +135,10 @@ static inline GameCube_Y1CBY2CR PackRGBs(
 	return PackY1CBY2CR(CalculateY(r1, g1, b1), cb, CalculateY(r2, g2, b2), cr);
 }
 
-static void UpdateRow_32_1(const void* const src_start, const void* const src_end, GameCube_Y1CBY2CR* const dst_start, const GameCube_PackedPalette* palette)
+static void UpdateRow_32_1(const void* const src_start, const void* const src_end, Wii_Y1CBY2CR* const dst_start, const Wii_PackedPalette* palette)
 {
 	const Uint32*		src	= src_start;
-	GameCube_Y1CBY2CR*	dst	= dst_start;
+	Wii_Y1CBY2CR*	dst	= dst_start;
 	while (src != src_end)
 	{
 		const unsigned int left = *src++;
@@ -153,7 +153,7 @@ static void UpdateRow_32_1(const void* const src_start, const void* const src_en
 	}
 }
 
-static inline GameCube_Y1CBY2CR PackRGB(unsigned int r, unsigned int g, unsigned int b)
+static inline Wii_Y1CBY2CR PackRGB(unsigned int r, unsigned int g, unsigned int b)
 {
 	const unsigned int y	= CalculateY(r, g, b);
 	const unsigned int cb	= CalculateCB(r, g, b);
@@ -162,10 +162,10 @@ static inline GameCube_Y1CBY2CR PackRGB(unsigned int r, unsigned int g, unsigned
 	return PackY1CBY2CR(y, cb, y, cr);
 }
 
-static void UpdateRow_32_2(const void* const src_start, const void* const src_end, GameCube_Y1CBY2CR* const dst_start, const GameCube_PackedPalette* palette)
+static void UpdateRow_32_2(const void* const src_start, const void* const src_end, Wii_Y1CBY2CR* const dst_start, const Wii_PackedPalette* palette)
 {
 	const Uint32*		src	= src_start;
-	GameCube_Y1CBY2CR*	dst	= dst_start;
+	Wii_Y1CBY2CR*	dst	= dst_start;
 	while (src != src_end)
 	{
 		const unsigned int left = *src++;
@@ -181,15 +181,15 @@ static void UpdateRow_32_2(const void* const src_start, const void* const src_en
 	}
 }
 
-SDL_Surface *GAMECUBE_SetVideoMode(_THIS, SDL_Surface *current,
+SDL_Surface *WII_SetVideoMode(_THIS, SDL_Surface *current,
 								   int width, int height, int bpp, Uint32 flags)
 {
 	typedef struct ModeInfo
 	{
 		const SDL_Rect*			resolution;
 		unsigned int			magnification;
-		GAMECUBE_UpdateRowFn*	update_row_8;
-		GAMECUBE_UpdateRowFn*	update_row_32;
+		WII_UpdateRowFn*	update_row_8;
+		WII_UpdateRowFn*	update_row_32;
 	} ModeInfo;
 
 	static const ModeInfo modes_ascending[] =
@@ -204,7 +204,7 @@ SDL_Surface *GAMECUBE_SetVideoMode(_THIS, SDL_Surface *current,
 	Uint32					r_mask;
 	Uint32					b_mask;
 	Uint32					g_mask;
-	GAMECUBE_UpdateRowFn*	update_row;
+	WII_UpdateRowFn*	update_row;
 
 	/* Find a mode big enough to store the requested resolution */
 	mode = &modes_ascending[0];
@@ -292,7 +292,7 @@ SDL_Surface *GAMECUBE_SetVideoMode(_THIS, SDL_Surface *current,
 		unsigned int x;
 		for (x = 0; x < (display_mode->fbWidth / 2); ++x)
 		{
-			static const GameCube_Y1CBY2CR black = PackRGB(0, 0, 0);
+			static const Wii_Y1CBY2CR black = PackRGB(0, 0, 0);
 			(*frame_buffer)[y][x] = black;
 		}
 	}
@@ -303,22 +303,22 @@ SDL_Surface *GAMECUBE_SetVideoMode(_THIS, SDL_Surface *current,
 }
 
 /* We don't actually allow hardware surfaces other than the main one */
-static int GAMECUBE_AllocHWSurface(_THIS, SDL_Surface *surface)
+static int WII_AllocHWSurface(_THIS, SDL_Surface *surface)
 {
 	return(-1);
 }
 
-static void GAMECUBE_FreeHWSurface(_THIS, SDL_Surface *surface)
+static void WII_FreeHWSurface(_THIS, SDL_Surface *surface)
 {
 	return;
 }
 
-static int GAMECUBE_LockHWSurface(_THIS, SDL_Surface *surface)
+static int WII_LockHWSurface(_THIS, SDL_Surface *surface)
 {
 	return(0);
 }
 
-static void GAMECUBE_UnlockHWSurface(_THIS, SDL_Surface *surface)
+static void WII_UnlockHWSurface(_THIS, SDL_Surface *surface)
 {
 	return;
 }
@@ -334,17 +334,17 @@ static void UpdateRect(_THIS, const SDL_Rect* const rect)
 		const unsigned int							w					= rect->w;
 		const unsigned int							h					= rect->h;
 		const struct SDL_PrivateVideoData* const	hidden				= this->hidden;
-		GAMECUBE_UpdateRowFn* const					update_row			= hidden->update_row;
+		WII_UpdateRowFn* const					update_row			= hidden->update_row;
 		const unsigned int							magnification		= hidden->magnification;
-		const GameCube_PackedPalette* const			palette				= &hidden->packed_palette;
+		const Wii_PackedPalette* const			palette				= &hidden->packed_palette;
 		const unsigned int							src_bytes_per_pixel	= screen->format->BytesPerPixel;
 		const unsigned int							src_pitch			= screen->pitch;
-		const GameCube_Y1CBY2CR* const				last_dst_row		= &(*frame_buffer)[(y + h) * magnification][(x * magnification) / 2];
+		const Wii_Y1CBY2CR* const				last_dst_row		= &(*frame_buffer)[(y + h) * magnification][(x * magnification) / 2];
 
 		// These variables change per row.
 		const Uint8*		src_row_start			= &hidden->back_buffer[(y * src_pitch) + (x * src_bytes_per_pixel)];
 		const Uint8* 		src_row_end				= src_row_start + (w * src_bytes_per_pixel);
-		GameCube_Y1CBY2CR*	dst_row_start			= &(*frame_buffer)[y * magnification][(x * magnification) / 2];
+		Wii_Y1CBY2CR*	dst_row_start			= &(*frame_buffer)[y * magnification][(x * magnification) / 2];
 
 		// Update each row.
 		while (dst_row_start != last_dst_row)
@@ -359,12 +359,12 @@ static void UpdateRect(_THIS, const SDL_Rect* const rect)
 			else
 			{
 				unsigned int		i;
-				GameCube_Y1CBY2CR*	next_row = dst_row_start + 320;
+				Wii_Y1CBY2CR*	next_row = dst_row_start + 320;
 
 				// Copy each magnified row.
 				for (i = 1; i < magnification; ++i)
 				{
-					memcpy(next_row, dst_row_start, 320 * sizeof(GameCube_Y1CBY2CR));
+					memcpy(next_row, dst_row_start, 320 * sizeof(Wii_Y1CBY2CR));
 					next_row += 320;
 				}
 
@@ -379,7 +379,7 @@ static void UpdateRect(_THIS, const SDL_Rect* const rect)
 	}
 }
 
-static void GAMECUBE_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
+static void WII_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
 {
 	const SDL_Rect*			rect;
 	const SDL_Rect* const	last_rect	= &rects[numrects];
@@ -396,11 +396,11 @@ static void GAMECUBE_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
 	}
 }
 
-int GAMECUBE_SetColors(_THIS, int first_color, int color_count, SDL_Color *colors)
+int WII_SetColors(_THIS, int first_color, int color_count, SDL_Color *colors)
 {
 	const int						last_color		= first_color + color_count;
-	GameCube_Palette* const			palette			= &this->hidden->palette;
-	GameCube_PackedPalette* const	packed_palette	= &this->hidden->packed_palette;
+	Wii_Palette* const			palette			= &this->hidden->palette;
+	Wii_PackedPalette* const	packed_palette	= &this->hidden->packed_palette;
 
 	int	component;
 	int	left;
@@ -439,7 +439,7 @@ int GAMECUBE_SetColors(_THIS, int first_color, int color_count, SDL_Color *color
 /* Note:  If we are terminated, this could be called in the middle of
 another SDL video routine -- notably UpdateRects.
 */
-void GAMECUBE_VideoQuit(_THIS)
+void WII_VideoQuit(_THIS)
 {
 	if (this->screen->pixels != NULL)
 	{
@@ -448,13 +448,13 @@ void GAMECUBE_VideoQuit(_THIS)
 	}
 }
 
-static void GAMECUBE_DeleteDevice(SDL_VideoDevice *device)
+static void WII_DeleteDevice(SDL_VideoDevice *device)
 {
 	SDL_free(device->hidden);
 	SDL_free(device);
 }
 
-static SDL_VideoDevice *GAMECUBE_CreateDevice(int devindex)
+static SDL_VideoDevice *WII_CreateDevice(int devindex)
 {
 	SDL_VideoDevice *device;
 
@@ -475,41 +475,41 @@ static SDL_VideoDevice *GAMECUBE_CreateDevice(int devindex)
 	SDL_memset(device->hidden, 0, (sizeof *device->hidden));
 
 	/* Set the function pointers */
-	device->VideoInit = GAMECUBE_VideoInit;
-	device->ListModes = GAMECUBE_ListModes;
-	device->SetVideoMode = GAMECUBE_SetVideoMode;
+	device->VideoInit = WII_VideoInit;
+	device->ListModes = WII_ListModes;
+	device->SetVideoMode = WII_SetVideoMode;
 	device->CreateYUVOverlay = NULL;
-	device->SetColors = GAMECUBE_SetColors;
-	device->UpdateRects = GAMECUBE_UpdateRects;
-	device->VideoQuit = GAMECUBE_VideoQuit;
-	device->AllocHWSurface = GAMECUBE_AllocHWSurface;
+	device->SetColors = WII_SetColors;
+	device->UpdateRects = WII_UpdateRects;
+	device->VideoQuit = WII_VideoQuit;
+	device->AllocHWSurface = WII_AllocHWSurface;
 	device->CheckHWBlit = NULL;
 	device->FillHWRect = NULL;
 	device->SetHWColorKey = NULL;
 	device->SetHWAlpha = NULL;
-	device->LockHWSurface = GAMECUBE_LockHWSurface;
-	device->UnlockHWSurface = GAMECUBE_UnlockHWSurface;
+	device->LockHWSurface = WII_LockHWSurface;
+	device->UnlockHWSurface = WII_UnlockHWSurface;
 	device->FlipHWSurface = NULL;
-	device->FreeHWSurface = GAMECUBE_FreeHWSurface;
+	device->FreeHWSurface = WII_FreeHWSurface;
 	device->SetCaption = NULL;
 	device->SetIcon = NULL;
 	device->IconifyWindow = NULL;
 	device->GrabInput = NULL;
 	device->GetWMInfo = NULL;
-	device->InitOSKeymap = GAMECUBE_InitOSKeymap;
-	device->PumpEvents = GAMECUBE_PumpEvents;
+	device->InitOSKeymap = WII_InitOSKeymap;
+	device->PumpEvents = WII_PumpEvents;
 
-	device->free = GAMECUBE_DeleteDevice;
+	device->free = WII_DeleteDevice;
 
 	return device;
 }
 
-static int GAMECUBE_Available(void)
+static int WII_Available(void)
 {
 	return(1);
 }
 
-VideoBootStrap GAMECUBE_bootstrap = {
-	GAMECUBEVID_DRIVER_NAME, "GameCube video driver",
-	GAMECUBE_Available, GAMECUBE_CreateDevice
+VideoBootStrap WII_bootstrap = {
+	WIIVID_DRIVER_NAME, "Wii video driver",
+	WII_Available, WII_CreateDevice
 };

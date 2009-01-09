@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 /* SDL includes */
-#include "../../video/gamecube/SDL_gamecubevideo.h"
+#include "../../video/wii/SDL_wiivideo.h"
 
 /* OGC includes */
 #include <ogcsys.h>
@@ -14,14 +14,14 @@
 
 /* Globals */
 GXRModeObj*			display_mode			= 0;
-GameCube_Y1CBY2CR	(*frame_buffer)[][320]	= 0;
+Wii_Y1CBY2CR	(*frame_buffer)[][320]	= 0;
 
-extern void gamecube_keyboard_init();
+extern void wii_keyboard_init();
 
 /* Do initialisation which has to be done first for the console to work */
-static void GAMECUBE_Initialize(void)
+static void WII_Init(void)
 {
-	//printf("GAMECUBE_Initialize ENTER\n");
+	//printf("WII_Init ENTER\n");
 
 	/* Initialise the video system */
 	VIDEO_Init();
@@ -35,7 +35,7 @@ static void GAMECUBE_Initialize(void)
 	WPAD_SetVRes(0, 640, 480);
 
 	/* Allocate the frame buffer */
-	frame_buffer = (GameCube_Y1CBY2CR (*)[][320])(MEM_K0_TO_K1(SYS_AllocateFramebuffer(display_mode)));
+	frame_buffer = (Wii_Y1CBY2CR (*)[][320])(MEM_K0_TO_K1(SYS_AllocateFramebuffer(display_mode)));
 
 	/* Set up the video system with the chosen mode */
 	VIDEO_Configure(display_mode);
@@ -55,9 +55,9 @@ static void GAMECUBE_Initialize(void)
 	// Initialise the debug console.
 	console_init(frame_buffer,20,20,display_mode->fbWidth,display_mode->xfbHeight,display_mode->fbWidth*VI_DISPLAY_PIX_SZ);
 
-	gamecube_keyboard_init();
+	wii_keyboard_init();
 	
-	//printf("GAMECUBE_Initialize EXIT\n");
+	//printf("WII_Init EXIT\n");
 }
 
 /* Entry point */
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 	printf("main ENTER\n");
 
 	/* Set up the screen mode */
-	GAMECUBE_Initialize();
+	WII_Init();
 
 	/* Call the user's main function */
 	return(SDL_main(argc, argv));

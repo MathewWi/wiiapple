@@ -28,14 +28,14 @@ data sources.  It can easily be extended to files, memory, etc.
 #include "SDL_endian.h"
 #include "SDL_rwops.h"
 
-#ifdef __GAMECUBE__
+#ifdef __WII__
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <sys/stat.h>
 
 /* Constants */
-#define GAMECUBE_MAX_PATH 260
+#define WII_MAX_PATH 260
 
 static SDL_bool initialised = SDL_FALSE;
 
@@ -44,7 +44,7 @@ extern bool fatInitDefault(void);
 /* Translate a path to DOS 8.3 format */
 static SDL_bool TranslatePath(const char* const in, char* const out)
 {
-	char		tokens[GAMECUBE_MAX_PATH + 1];
+	char		tokens[WII_MAX_PATH + 1];
 	const char	delimiters[] = "/\\";
 	char*		token;
 
@@ -52,8 +52,8 @@ static SDL_bool TranslatePath(const char* const in, char* const out)
 	*out = '\0';
 
 	// Keep a copy of the input for tokenising.
-	strncpy(tokens, in, GAMECUBE_MAX_PATH);
-	tokens[GAMECUBE_MAX_PATH] = '\0';
+	strncpy(tokens, in, WII_MAX_PATH);
+	tokens[WII_MAX_PATH] = '\0';
 
 	// Split the input into tokens.
 	token = strtok(tokens, delimiters);
@@ -115,7 +115,7 @@ static SDL_bool TranslatePath(const char* const in, char* const out)
 			SDL_strupr(token);
 
 			// Is the buffer too small to fit a slash and the token?
-			if ((SDL_strlen(out) + 1 + SDL_strlen(token)) > GAMECUBE_MAX_PATH)
+			if ((SDL_strlen(out) + 1 + SDL_strlen(token)) > WII_MAX_PATH)
 			{
 				SDL_SetError("File name truncated due to buffer length");
 				return SDL_FALSE;
@@ -141,7 +141,7 @@ static SDL_bool TranslatePath(const char* const in, char* const out)
 	return SDL_TRUE;
 }
 
-static int SDLCALL gamecube_seek(SDL_RWops *context, int offset, int whence)
+static int SDLCALL wii_seek(SDL_RWops *context, int offset, int whence)
 {
 	int action = SEEK_SET;
 	switch (whence)
@@ -159,18 +159,18 @@ static int SDLCALL gamecube_seek(SDL_RWops *context, int offset, int whence)
 		return(-1);
 	}
 
-	if ( fseek(context->hidden.gamecube.fp, offset, action) == 0 ) {
-		return ftell(context->hidden.gamecube.fp);
+	if ( fseek(context->hidden.wii.fp, offset, action) == 0 ) {
+		return ftell(context->hidden.wii.fp);
 	} else {
 		SDL_Error(SDL_EFSEEK);
 		return(-1);
 	}
 }
 
-static int SDLCALL gamecube_read(SDL_RWops *context, void *ptr, int size, int num)
+static int SDLCALL wii_read(SDL_RWops *context, void *ptr, int size, int num)
 {
 	int bytes_read;
-	bytes_read = fread(ptr, size, num, context->hidden.gamecube.fp); 
+	bytes_read = fread(ptr, size, num, context->hidden.wii.fp); 
 	if ( bytes_read == -1) {
 		SDL_Error(SDL_EFREAD);
 		return(-1);
@@ -178,11 +178,11 @@ static int SDLCALL gamecube_read(SDL_RWops *context, void *ptr, int size, int nu
 	return(bytes_read);
 }
 
-static int SDLCALL gamecube_write(SDL_RWops *context, const void *ptr, int size, int num)
+static int SDLCALL wii_write(SDL_RWops *context, const void *ptr, int size, int num)
 {
 	int bytes_written;
 
-	bytes_written = fwrite(ptr, size, num, context->hidden.gamecube.fp);
+	bytes_written = fwrite(ptr, size, num, context->hidden.wii.fp);
 	if ( bytes_written != (size * num) ) {
 		SDL_Error(SDL_EFWRITE);
 		return(-1);
@@ -190,11 +190,11 @@ static int SDLCALL gamecube_write(SDL_RWops *context, const void *ptr, int size,
 	return(num);
 }
 
-static int SDLCALL gamecube_close(SDL_RWops *context)
+static int SDLCALL wii_close(SDL_RWops *context)
 {
 	if ( context )
 	{
-		fclose(context->hidden.gamecube.fp);
+		fclose(context->hidden.wii.fp);
 		SDL_FreeRW(context);
 	}
 	return(0);
@@ -202,7 +202,7 @@ static int SDLCALL gamecube_close(SDL_RWops *context)
 
 SDL_RWops *SDL_RWFromFile(const char *file, const char *mode)
 {
-	char translated_path[GAMECUBE_MAX_PATH + 1];
+	char translated_path[WII_MAX_PATH + 1];
 	int stat_result;
 	struct stat stat_info;
 	FILE* fp;
@@ -256,15 +256,15 @@ SDL_RWops *SDL_RWFromFile(const char *file, const char *mode)
 		SDL_RWops *rwops = SDL_AllocRW();
 		if ( rwops != NULL )
 		{
-			rwops->seek = gamecube_seek;
-			rwops->read = gamecube_read;
-			rwops->write = gamecube_write;
-			rwops->close = gamecube_close;
-			rwops->hidden.gamecube.fp = fp;
-			rwops->hidden.gamecube.size = stat_info.st_size;
+			rwops->seek = wii_seek;
+			rwops->read = wii_read;
+			rwops->write = wii_write;
+			rwops->close = wii_close;
+			rwops->hidden.wii.fp = fp;
+			rwops->hidden.wii.size = stat_info.st_size;
 		}
 		return(rwops);
 	}
 }
 
-#endif /* __GAMECUBE__ */
+#endif /* __WII__ */

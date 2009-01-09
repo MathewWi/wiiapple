@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2006 Sam Lantinga
+    Copyright (C) 1997-2009 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -25,7 +25,6 @@
 
 #include "SDL_error.h"
 #include "SDL_error_c.h"
-#include <time.h>
 
 /* Routine to get the thread-specific error variable */
 #if SDL_THREADS_DISABLED
@@ -110,17 +109,6 @@ void SDL_SetError (const char *fmt, ...)
 	/* If we are in debug mode, print out an error message */
 #ifdef DEBUG_ERROR
 	fprintf(stderr, "SDL_SetError: %s\n", SDL_GetError());
-	FILE* FileHandle = fopen("SDL_error.txt", "a");
-    	if(FileHandle)
-    	{
-		time_t     now;
-		struct tm  *ts;
-		time(&now);
-		ts = localtime(&now);
-
-		fprintf(FileHandle, "%i.%i %i:%i:%i: %s\n", ts->tm_mon, ts->tm_mday, ts->tm_hour, ts->tm_min, ts->tm_sec, SDL_GetError());
-        	fclose(FileHandle);
-    	}
 #endif
 }
 

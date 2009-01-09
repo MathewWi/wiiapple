@@ -21,20 +21,46 @@
 */
 #include "SDL_config.h"
 
-#ifndef _SDL_gamecubeaudio_h
-#define _SDL_gamecubeaudio_h
+#ifndef _SDL_wiivideo_h
+#define _SDL_wiivideo_h
 
-#include "../SDL_sysaudio.h"
+/* SDL internal includes */
+#include "../SDL_sysvideo.h"
+
+/* OGC includes */
+#include <ogc/gx_struct.h>
 
 /* Hidden "this" pointer for the video functions */
-#define _THIS	SDL_AudioDevice *this
+#define _THIS	SDL_VideoDevice *this
 
-struct SDL_PrivateAudioData {
-	/* The file descriptor for the audio device */
-	Uint8 *mixbuf;
-	Uint32 mixlen;
-	Uint32 write_delay;
-	Uint32 initial_calls;
+/* The Wii uses this frame buffer format */
+typedef Uint32 Wii_Y1CBY2CR;
+
+/* A single palette entry */
+typedef struct Wii_YCBCR
+{
+	Uint8 y;
+	Uint8 cb;
+	Uint8 cr;
+} Wii_YCBCR;
+
+/* Types */
+typedef Wii_YCBCR Wii_Palette[256];
+typedef struct { Wii_Y1CBY2CR entries[256][256]; } Wii_PackedPalette;
+typedef void (WII_UpdateRowFn)(const void*, const void*, Wii_Y1CBY2CR*, const Wii_PackedPalette*);
+
+/* Private display data */
+struct SDL_PrivateVideoData
+{
+	Uint8*					back_buffer;
+	Wii_Palette		palette;
+	Wii_PackedPalette	packed_palette;
+	WII_UpdateRowFn*	update_row;
+	unsigned int			magnification;
 };
 
-#endif /* _SDL_dummyaudio_h */
+/* Globals */
+extern GXRModeObj*			display_mode;
+extern Wii_Y1CBY2CR	(*frame_buffer)[][320];
+
+#endif /* _SDL_wiivideo_h */

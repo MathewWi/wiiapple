@@ -1,7 +1,7 @@
 # Directories.
-OBJ_DIR			:= obj/gamecube
+OBJ_DIR			:= obj/wii
 LIB_DIR			:= lib
-BIN_DIR			:= bin/gamecube
+BIN_DIR			:= bin/wii
 SDL_OBJ_DIR		:= $(OBJ_DIR)/sdl
 SDL_SRC_DIR		:= src
 TEST_OBJ_DIR	:= $(OBJ_DIR)/test
@@ -15,25 +15,25 @@ SDL_SRCS	:= \
 	$(wildcard $(SDL_SRC_DIR)/*.c) \
 	$(wildcard $(SDL_SRC_DIR)/audio/*.c) \
 	$(wildcard $(SDL_SRC_DIR)/audio/dummy/*.c) \
-	$(wildcard $(SDL_SRC_DIR)/audio/gamecube/*.c) \
+	$(wildcard $(SDL_SRC_DIR)/audio/wii/*.c) \
 	$(wildcard $(SDL_SRC_DIR)/cdrom/*.c) \
 	$(wildcard $(SDL_SRC_DIR)/cdrom/dummy/*.c) \
 	$(wildcard $(SDL_SRC_DIR)/cpuinfo/*.c) \
 	$(wildcard $(SDL_SRC_DIR)/events/*.c) \
 	$(wildcard $(SDL_SRC_DIR)/file/*.c) \
-	$(wildcard $(SDL_SRC_DIR)/file/gamecube/*.c) \
+	$(wildcard $(SDL_SRC_DIR)/file/wii/*.c) \
 	$(wildcard $(SDL_SRC_DIR)/joystick/*.c) \
-	$(wildcard $(SDL_SRC_DIR)/joystick/gamecube/*.c) \
+	$(wildcard $(SDL_SRC_DIR)/joystick/wii/*.c) \
 	$(wildcard $(SDL_SRC_DIR)/loadso/dummy/*.c) \
-	$(wildcard $(SDL_SRC_DIR)/main/gamecube/*.c) \
+	$(wildcard $(SDL_SRC_DIR)/main/wii/*.c) \
 	$(wildcard $(SDL_SRC_DIR)/stdlib/*.c) \
 	$(wildcard $(SDL_SRC_DIR)/thread/*.c) \
-	$(wildcard $(SDL_SRC_DIR)/thread/gamecube/*.c) \
+	$(wildcard $(SDL_SRC_DIR)/thread/wii/*.c) \
 	$(wildcard $(SDL_SRC_DIR)/timer/*.c) \
-	$(wildcard $(SDL_SRC_DIR)/timer/gamecube/*.c) \
+	$(wildcard $(SDL_SRC_DIR)/timer/wii/*.c) \
 	$(wildcard $(SDL_SRC_DIR)/video/*.c) \
 	$(wildcard $(SDL_SRC_DIR)/video/dummy/*.c) \
-	$(wildcard $(SDL_SRC_DIR)/video/gamecube/*.c)
+	$(wildcard $(SDL_SRC_DIR)/video/wii/*.c)
 
 # Library object files.
 SDL_OBJS	:= $(subst $(SDL_SRC_DIR),$(SDL_OBJ_DIR),$(SDL_SRCS:.c=.o))
@@ -59,7 +59,8 @@ clean:
 
 # How to install to SD card ready for running.
 install: $(TEST_DOLS)
-	cp $(TEST_DOLS) /home/yohanes/dols
+	@-mkdir -p dols
+	cp $(TEST_DOLS) dols
 
 # How to build a library.
 $(LIB_DIR)/libSDL.a: $(SDL_OBJS)
@@ -80,7 +81,7 @@ $(BIN_DIR)/%.dol: $(TEST_OBJ_DIR)/%.elf
 #COMMON_FLAGS	:= -g -O2 -mrvl -Wall -mcpu=750 -meabi -mhard-float $(MACHDEP) 
 COMMON_FLAGS	:=  -mrvl -Wall -mcpu=750 -meabi -mhard-float $(MACHDEP) 
 INCLUDES		:= -Iinclude -I$(DEVKITPRO)/libogc/include
-DEFINES			:= -DGEKKO -DDEBUG_ERROR -DDEBUG_TIMERS -DDEBUG_THREADS -DDEBUG_BUILD -DDEBUG_CONVERT -DSDL_AUDIO_DRIVER_GAMECUBE
+DEFINES			:= -DGEKKO -DDEBUG_ERROR -DDEBUG_TIMERS -DDEBUG_THREADS -DDEBUG_BUILD -DDEBUG_CONVERT -DSDL_AUDIO_DRIVER_WII
 CFLAGS			:= $(COMMON_FLAGS) $(INCLUDES) $(DEFINES)
 
 # Test link flags.
