@@ -62,5 +62,7 @@ struct SDL_PrivateVideoData
 /* Globals */
 extern GXRModeObj*			display_mode;
 extern Wii_Y1CBY2CR	(*frame_buffer)[][320];
+extern Wii_Y1CBY2CR	(*frame_buffer1)[][320];
+extern Wii_Y1CBY2CR	(*frame_buffer2)[][320];
 
 #endif /* _SDL_wiivideo_h */

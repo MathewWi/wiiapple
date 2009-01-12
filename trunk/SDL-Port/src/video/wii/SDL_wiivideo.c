@@ -247,6 +247,7 @@ SDL_Surface *WII_SetVideoMode(_THIS, SDL_Surface *current,
 	}
 	bytes_per_pixel = bpp / 8;
 
+
 	// Free any existing buffer.
 	if (this->hidden->back_buffer)
 	{
@@ -262,6 +263,7 @@ SDL_Surface *WII_SetVideoMode(_THIS, SDL_Surface *current,
 		return(NULL);
 	}
 
+
 	/* Allocate the new pixel format for the screen */
 	if (!SDL_ReallocFormat(current, bpp, r_mask, g_mask, b_mask, 0))
 	{
@@ -275,7 +277,8 @@ SDL_Surface *WII_SetVideoMode(_THIS, SDL_Surface *current,
 	SDL_memset(this->hidden->back_buffer, 0, width * height * bytes_per_pixel);
 
 	/* Set up the new mode framebuffer */
-	current->flags = flags & SDL_FULLSCREEN;
+	//current->flags =  SDL_DOUBLEBUF |( flags & SDL_FULLSCREEN);
+	current->flags =  flags & SDL_FULLSCREEN;
 	current->w = width;
 	current->h = height;
 	current->pitch = current->w * bytes_per_pixel;
@@ -321,6 +324,28 @@ static int WII_LockHWSurface(_THIS, SDL_Surface *surface)
 static void WII_UnlockHWSurface(_THIS, SDL_Surface *surface)
 {
 	return;
+}
+
+
+static void WII_FlipHWSurface(_THIS, SDL_Surface *surface)
+{
+	Wii_Y1CBY2CR	(*now)[][320]	= 0;	
+	now = frame_buffer;
+	if (frame_buffer==frame_buffer1) {
+		frame_buffer = frame_buffer2;
+		//this->hidden->back_buffer = frame_buffer1;
+		//surface->pixels = frame_buffer1;
+	}
+	else {
+		frame_buffer = frame_buffer1;
+		//this->hidden->back_buffer = frame_buffer2;
+		//surface->pixels = frame_buffer2;
+	}
+
+	VIDEO_SetNextFramebuffer(now);
+	VIDEO_Flush();
+	VIDEO_WaitVSync();
+
 }
 
 static void UpdateRect(_THIS, const SDL_Rect* const rect)
@@ -394,6 +419,7 @@ static void WII_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
 
 		UpdateRect(this, &aligned_rect);
 	}
+
 }
 
 int WII_SetColors(_THIS, int first_color, int color_count, SDL_Color *colors)
@@ -441,11 +467,11 @@ another SDL video routine -- notably UpdateRects.
 */
 void WII_VideoQuit(_THIS)
 {
-	if (this->screen->pixels != NULL)
+/*	if (this->screen->pixels != NULL)
 	{
 		SDL_free(this->screen->pixels);
 		this->screen->pixels = NULL;
-	}
+		}*/
 }
 
 static void WII_DeleteDevice(SDL_VideoDevice *device)
@@ -489,6 +515,7 @@ static SDL_VideoDevice *WII_CreateDevice(int devindex)
 	device->SetHWAlpha = NULL;
 	device->LockHWSurface = WII_LockHWSurface;
 	device->UnlockHWSurface = WII_UnlockHWSurface;
+	//device->FlipHWSurface = WII_FlipHWSurface;
 	device->FlipHWSurface = NULL;
 	device->FreeHWSurface = WII_FreeHWSurface;
 	device->SetCaption = NULL;

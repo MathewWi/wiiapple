@@ -79,9 +79,10 @@ $(BIN_DIR)/%.dol: $(TEST_OBJ_DIR)/%.elf
 
 # Compilation flags.
 #COMMON_FLAGS	:= -g -O2 -mrvl -Wall -mcpu=750 -meabi -mhard-float $(MACHDEP) 
-COMMON_FLAGS	:=  -mrvl -Wall -mcpu=750 -meabi -mhard-float $(MACHDEP) 
+COMMON_FLAGS	:=  -O2 -mrvl -Wall -mcpu=750 -meabi -mhard-float $(MACHDEP) 
 INCLUDES		:= -Iinclude -I$(DEVKITPRO)/libogc/include
-DEFINES			:= -DGEKKO -DDEBUG_ERROR -DDEBUG_TIMERS -DDEBUG_THREADS -DDEBUG_BUILD -DDEBUG_CONVERT -DSDL_AUDIO_DRIVER_WII
+#DEFINES			:= -DGEKKO -DDEBUG_ERROR -DDEBUG_TIMERS -DDEBUG_THREADS -DDEBUG_BUILD -DDEBUG_CONVERT -DSDL_AUDIO_DRIVER_WII
+DEFINES			:= -DGEKKO -DDEBUG_ERROR -DDEBUG_TIMERS -DDEBUG_THREADS -DDEBUG_BUILD -DSDL_AUDIO_DRIVER_WII
 CFLAGS			:= $(COMMON_FLAGS) $(INCLUDES) $(DEFINES)
 
 # Test link flags.
@@ -94,6 +95,8 @@ $(TEST_OBJ_DIR)/%.elf: $(TEST_OBJ_DIR)/%.o $(LIB_DIR)/libSDL.a
 	@echo Linking $@
 	@-mkdir -p $(dir $@)
 	powerpc-gekko-g++ -o $@ $< $(LDFLAGS)
+	#keep elf for debugging
+	#cp $@ /tmp/elf 
 
 # How to compile C file (Tests).
 $(TEST_OBJ_DIR)/%.o: $(TEST_SRC_DIR)/%.c

@@ -14,9 +14,13 @@
 
 /* Globals */
 GXRModeObj*			display_mode			= 0;
+Wii_Y1CBY2CR	(*frame_buffer1)[][320]	= 0;
+Wii_Y1CBY2CR	(*frame_buffer2)[][320]	= 0;
 Wii_Y1CBY2CR	(*frame_buffer)[][320]	= 0;
 
+
 extern void wii_keyboard_init();
+extern void wii_mouse_init();
 
 /* Do initialisation which has to be done first for the console to work */
 static void WII_Init(void)
@@ -35,7 +39,9 @@ static void WII_Init(void)
 	WPAD_SetVRes(0, 640, 480);
 
 	/* Allocate the frame buffer */
-	frame_buffer = (Wii_Y1CBY2CR (*)[][320])(MEM_K0_TO_K1(SYS_AllocateFramebuffer(display_mode)));
+	frame_buffer1 = (Wii_Y1CBY2CR (*)[][320])(MEM_K0_TO_K1(SYS_AllocateFramebuffer(display_mode)));
+	//frame_buffer2 = (Wii_Y1CBY2CR (*)[][320])(MEM_K0_TO_K1(SYS_AllocateFramebuffer(display_mode)));
+	frame_buffer = frame_buffer1;
 
 	/* Set up the video system with the chosen mode */
 	VIDEO_Configure(display_mode);
@@ -55,7 +61,10 @@ static void WII_Init(void)
 	// Initialise the debug console.
 	console_init(frame_buffer,20,20,display_mode->fbWidth,display_mode->xfbHeight,display_mode->fbWidth*VI_DISPLAY_PIX_SZ);
 
+	USB_Initialize();
+	wii_mouse_init(); //must be called first
 	wii_keyboard_init();
+
 	
 	//printf("WII_Init EXIT\n");
 }

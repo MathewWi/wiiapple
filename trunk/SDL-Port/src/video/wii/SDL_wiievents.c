@@ -16,8 +16,11 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-    Sam Lantinga
-    slouken@libsdl.org
+
+    Yohanes Nugroho 
+    yohanes@gmail.com
+
+
 */
 #include "SDL_config.h"
 
@@ -32,11 +35,23 @@ int lastX = 0;
 int lastY = 0;
 Uint8 lastButtonStateA = SDL_RELEASED;
 Uint8 lastButtonStateB = SDL_RELEASED;
+
+Uint8 lastButtonStateLeftMouse = SDL_RELEASED;
+Uint8 lastButtonStateRightMouse = SDL_RELEASED;
+
+
 Uint8 lastButtonStateHome = SDL_RELEASED;
+
+#define USB_CLASS_HID				0x03
+#define USB_SUBCLASS_BOOT			0x01
+#define USB_PROTOCOL_KEYBOARD			0x01
+#define USB_PROTOCOL_MOUSE			0x02
+
 
 static SDLKey keymap[512];
 
 static s32 stat;
+static s32 mstat;
 
 typedef struct
 {
@@ -74,8 +89,16 @@ typedef struct _KeyboardEvent{
 	int scancode;
 } keyboardEvent;
 
+typedef struct _MouseEvent{
+	u8 button;
+	int rx;
+	int ry;
+} mouseEvent;
+
+
 
 static keyboardEvent ke;
+static mouseEvent me;
 
 typedef struct _node
 {
@@ -83,8 +106,26 @@ typedef struct _node
 	keyboardEvent event;
 }node;
 
+typedef struct _mousenode
+{
+	lwp_node mousenode;
+	mouseEvent event;
+}mousenode;
+
 
 lwp_queue *queue;
+lwp_queue *mousequeue;
+
+
+static int mouse_initialized =0;
+
+static int mouse_vid = 0;
+static int mouse_pid = 0;
+static s32 mousefd=0;	
+static signed char *mousedata = 0;
+#define DEVLIST_MAXSIZE				0x08
+
+
 
 //Add an event to the event queue
 s32 KEYBOARD_addEvent(int type, int scancode, int modifiers)
@@ -97,6 +138,19 @@ s32 KEYBOARD_addEvent(int type, int scancode, int modifiers)
 	return 1;
 }
 
+
+//Add an event to the event queue
+s32 MOUSE_addEvent(u8 button, int rx, int ry)
+{
+	mousenode *n = (mousenode *)malloc(sizeof(mousenode));
+	n->event.button = button;
+	n->event.rx = rx;
+	n->event.ry= ry;
+	__lwp_queue_append(mousequeue,(lwp_node*)n);
+	return 1;
+}
+
+
 //Get the first event of the event queue
 s32 KEYBOARD_getEvent(keyboardEvent* event)
 {
@@ -106,6 +160,18 @@ s32 KEYBOARD_getEvent(keyboardEvent* event)
 	*event = n->event;
 	return 1;
 }
+
+
+//Get the first event of the event queue
+s32 MOUSE_getEvent(mouseEvent* event)
+{
+	mousenode *n = (mousenode*) __lwp_queue_get(mousequeue);
+	if (!n)
+		return 0;
+	*event = n->event;
+	return 1;
+}
+
 
 
 SDLMod to_SDL_Modifiers(int km)
@@ -243,6 +309,7 @@ void initkeymap()
 
 static int keyboard_initialized =0;
 
+
 void wii_keyboard_init()
 {
 	if (!keyboard_initialized) {
@@ -272,8 +339,175 @@ void wii_keyboard_init()
 	}
 }
 
+#define USB_REQ_GETPROTOCOL			0x03
+#define USB_REQ_SETPROTOCOL			0x0B
+#define USB_REQ_GETREPORT			0x01
+#define USB_REQ_SETREPORT			0x09
+#define USB_REPTYPE_INPUT			0x01
+#define USB_REPTYPE_OUTPUT			0x02
+#define USB_REPTYPE_FEATURE			0x03
 
-void WII_PumpEvents(_THIS)
+#define USB_REQTYPE_GET				0xA1
+#define USB_REQTYPE_SET				0x21
+
+
+s32 mousecallback(s32 result,void *usrdata)
+{
+
+	if (result>0) {
+		u8 button = mousedata[0];
+
+		int x = mousedata[1];
+		int y = mousedata[2];
+		//int w = (-1)<<(data[3]-1);
+
+		MOUSE_addEvent(button, x, y);
+		
+		USB_ReadIntrMsgAsync(mousefd, 0x81 ,4, mousedata, mousecallback, 0);
+	} else {
+		mouse_initialized = 0;
+		mousefd =0;
+	}
+	return 0;
+}
+
+	u8 mouseconfiguration;
+	u32 mouseinterface;
+	u32 mousealtInterface;
+
+
+static int wii_find_mouse() 
+{
+	s32 fd=0;	
+	static u8 *buffer = 0;
+
+
+      
+	if (!buffer) {
+		buffer = (u8*)memalign(32, DEVLIST_MAXSIZE << 3);
+	}
+	if(buffer == NULL) {
+		return -1;
+	}
+	memset(buffer, 0, DEVLIST_MAXSIZE << 3);
+
+	u8 dummy;
+	u16 vid,pid;
+
+	if (USB_GetDeviceList("/dev/usb/oh0", buffer, DEVLIST_MAXSIZE, 0, &dummy) < 0)
+	{
+
+		free(buffer);
+		buffer =0;
+		return -2;
+	}
+	
+
+
+	u8 mouseep;
+	u32 mouseep_size;
+
+	int i;
+
+
+	for(i = 0; i < DEVLIST_MAXSIZE; i++)
+	{
+		memcpy(&vid, (buffer + (i << 3) + 4), 2);
+		memcpy(&pid, (buffer + (i << 3) + 6), 2);
+		
+		if ((vid==0)&&(pid==0))
+			continue;
+		fd =0;
+
+		int err = USB_OpenDevice("oh0",vid,pid,&fd);
+		if (err<0) {			
+			continue;
+		} else {
+			//fprintf(stderr, "ok open %04x:%04x\n", vid, pid);
+			//SDL_Delay(1000);
+
+		}
+
+	
+		u32 iConf, iInterface, iEp;
+		usb_devdesc udd;
+		usb_configurationdesc *ucd;
+		usb_interfacedesc *uid;
+		usb_endpointdesc *ued;
+
+
+		USB_GetDescriptors(fd, &udd);
+
+		for(iConf = 0; iConf < udd.bNumConfigurations; iConf++)
+		{
+			ucd = &udd.configurations[iConf];
+			for(iInterface = 0; iInterface < ucd->bNumInterfaces; iInterface++)
+			{
+				uid = &ucd->interfaces[iInterface];
+				
+				if ( (uid->bInterfaceClass == USB_CLASS_HID) && (uid->bInterfaceSubClass == USB_SUBCLASS_BOOT) && 
+				     (uid->bInterfaceProtocol== USB_PROTOCOL_MOUSE))
+				{
+					int iEp;
+					for(iEp = 0; iEp < uid->bNumEndpoints; iEp++) {
+						ued = &uid->endpoints[iEp];
+						mouse_vid = vid;
+						mouse_pid = pid;
+						
+						mouseep = ued->bEndpointAddress;
+						mouseep_size = ued->wMaxPacketSize;
+						mouseconfiguration = ucd->bConfigurationValue;
+						mouseinterface = uid->bInterfaceNumber;
+						mousealtInterface = uid->bAlternateSetting;
+						
+					}
+					break;
+				}
+
+				  
+			}
+		}
+		USB_FreeDescriptors(&udd);
+		USB_CloseDevice(&fd);
+
+
+	}
+	if (mouse_pid!=0 || mouse_vid!=0) return 0;
+	return -1;
+
+}
+
+void wii_mouse_init()
+{
+	if (!mouse_initialized) {
+
+		if (!mousequeue) {
+			mousequeue = (lwp_queue*)malloc(sizeof(lwp_queue));	
+			__lwp_queue_initialize(mousequeue,0,0,0);
+		}
+		
+		if (wii_find_mouse()!=0) return;
+
+		if (USB_OpenDevice("oh0",mouse_vid,mouse_pid,&mousefd)<0) {
+			return;
+		}
+		if (!mousedata) {
+			mousedata = (signed char*)memalign(32, 20);
+		}
+		
+		//set boot protocol
+		USB_WriteCtrlMsg(mousefd,USB_REQTYPE_SET,USB_REQ_SETPROTOCOL,0,0,0,0);
+		USB_ReadIntrMsgAsync(mousefd, 0x81 ,4, mousedata, mousecallback, 0);
+
+		mouse_initialized  = 1;
+	} 
+}
+
+static int posted;
+
+
+
+void PumpEvents()
 {       
 	WPAD_ScanPads();
 /*
@@ -286,15 +520,17 @@ void WII_PumpEvents(_THIS)
 
 
 	stat =  KEYBOARD_getEvent(&ke);
+	mstat =  MOUSE_getEvent(&me);
 
-	if(wd->ir.valid)
-	{
-		int x = wd->ir.x;
-		int y = wd->ir.y;
+
+	if(wd->ir.dot[0].visible) {
+
+		int x = (wd->ir.dot[0].rx*640)/1024;
+		int y = (wd->ir.dot[0].ry*480)/768;
 
 		if(lastX != x || lastY != y)
 		{
-			SDL_PrivateMouseMotion(0, 0, x, y);
+			posted += SDL_PrivateMouseMotion(0, 0, x, y);
 			lastX = x;
 			lastY = y;
 		}
@@ -313,12 +549,12 @@ void WII_PumpEvents(_THIS)
 		if(stateA != lastButtonStateA)
 		{
 			lastButtonStateA = stateA;
-			SDL_PrivateMouseButton(stateA, SDL_BUTTON_LEFT, x, y);
+			posted += SDL_PrivateMouseButton(stateA, SDL_BUTTON_LEFT, x, y);
 		}
 		if(stateB != lastButtonStateB)
 		{
 			lastButtonStateB = stateB;
-			SDL_PrivateMouseButton(stateB, SDL_BUTTON_RIGHT, x, y);
+			posted += SDL_PrivateMouseButton(stateB, SDL_BUTTON_RIGHT, x, y);
 		}
 	}
 
@@ -350,9 +586,48 @@ void WII_PumpEvents(_THIS)
 		Uint8 keystate =  (ke.type==KEYBOARD_PRESSED)?SDL_PRESSED:SDL_RELEASED;
 		keysym.sym = ke.scancode;
 		SDL_SetModState(to_SDL_Modifiers(ke.modifiers));
-		SDL_PrivateKeyboard(keystate, &keysym);       	
+		posted += SDL_PrivateKeyboard(keystate, &keysym);       	
 	}
+
+	if (mstat) {		
+		int x, y;
+		posted +=SDL_PrivateMouseMotion(me.button, 1, me.rx, me.ry);
+
+		u8 button = me.button;
+
+		if ( button & 0x1 ) {
+			if ( !(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(1)) ) {
+				posted +=SDL_PrivateMouseButton(SDL_PRESSED, 1, 0, 0);
+			}
+		} else {
+			if ( (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(1)) ) {
+				posted +=SDL_PrivateMouseButton(SDL_RELEASED, 1, 0, 0);
+			}
+		}
+
+		if ( button & 0x2 ) {
+			if ( !(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(3)) ) {
+				posted +=SDL_PrivateMouseButton(SDL_PRESSED, 3, 0, 0);
+			}
+		} else {
+			if ( (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(3)) ) {
+				posted +=SDL_PrivateMouseButton(SDL_RELEASED, 3, 0, 0);
+			}
+		}
+
+	}
+
 }
+
+void WII_PumpEvents(_THIS)
+{
+	
+	do {
+		posted =0;
+		PumpEvents();
+	} while (posted);
+}
+
 
 
 
