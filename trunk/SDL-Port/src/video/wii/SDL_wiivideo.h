@@ -53,6 +53,7 @@ typedef void (WII_UpdateRowFn)(const void*, const void*, Wii_Y1CBY2CR*, const Wi
 struct SDL_PrivateVideoData
 {
 	Uint8*					back_buffer;
+	Uint32*					tmp_buffer;
 	Wii_Palette		palette;
 	Wii_PackedPalette	packed_palette;
 	WII_UpdateRowFn*	update_row;

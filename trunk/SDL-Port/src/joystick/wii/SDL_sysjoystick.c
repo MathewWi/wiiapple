@@ -116,6 +116,8 @@ void SDL_SYS_JoystickUpdate(SDL_Joystick *joystick)
 		PAD_BUTTON_START	    
 	};
 
+	if (!joystick) return;
+
 	
 	buttons = PAD_ButtonsHeld(joystick->index);
 	

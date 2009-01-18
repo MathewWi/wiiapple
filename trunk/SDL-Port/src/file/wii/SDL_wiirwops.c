@@ -40,6 +40,7 @@ data sources.  It can easily be extended to files, memory, etc.
 static SDL_bool initialised = SDL_FALSE;
 
 extern bool fatInitDefault(void);
+extern bool fatInit (unsigned int cacheSize, bool setAsDefaultDevice);
 
 /* Translate a path to DOS 8.3 format */
 static SDL_bool TranslatePath(const char* const in, char* const out)
@@ -227,7 +228,8 @@ SDL_RWops *SDL_RWFromFile(const char *file, const char *mode)
 	/* Initialise the SD library */
 	if (!initialised)
 	{
-		fatInitDefault();
+		fatInit(32, 1);
+		//fatInitDefault();
 		initialised = SDL_TRUE;
 	}
 

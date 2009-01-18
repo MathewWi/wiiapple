@@ -516,54 +516,63 @@ void PumpEvents()
 		keyboard_initialized = 1;
 	}
 */
+
+
 	WPADData *wd = WPAD_Data(0);	
 
 
 	stat =  KEYBOARD_getEvent(&ke);
 	mstat =  MOUSE_getEvent(&me);
+	int x, y;
+
+	SDL_GetMouseState(&x, &y);
+
+	if(wd->ir.valid) {
+
+		//int x = (wd->ir.dot[0].rx*640)/1024;
+		//int y = (wd->ir.dot[0].ry*480)/768;
+	       
+		x = wd->ir.x;
+		y = wd->ir.y;
 
 
-	if(wd->ir.dot[0].visible) {
-
-		int x = (wd->ir.dot[0].rx*640)/1024;
-		int y = (wd->ir.dot[0].ry*480)/768;
-
-		if(lastX != x || lastY != y)
-		{
+		if(lastX!= x || lastY != y) {
 			posted += SDL_PrivateMouseMotion(0, 0, x, y);
 			lastX = x;
 			lastY = y;
-		}
-		
-		Uint8 stateA = SDL_RELEASED;
-		Uint8 stateB = SDL_RELEASED;
-		if(wd->btns_h & WPAD_BUTTON_A)
-		{
-			stateA = SDL_PRESSED;
-		}
-		if(wd->btns_h & WPAD_BUTTON_B)
-		{
-			stateB = SDL_PRESSED;
-		}
-		
-		if(stateA != lastButtonStateA)
-		{
-			lastButtonStateA = stateA;
-			posted += SDL_PrivateMouseButton(stateA, SDL_BUTTON_LEFT, x, y);
-		}
-		if(stateB != lastButtonStateB)
-		{
-			lastButtonStateB = stateB;
-			posted += SDL_PrivateMouseButton(stateB, SDL_BUTTON_RIGHT, x, y);
-		}
+		} 
 	}
+		
 
+	Uint8 stateA = SDL_RELEASED;
+	Uint8 stateB = SDL_RELEASED;
+	if(wd->btns_h & WPAD_BUTTON_A)
+	{
+		stateA = SDL_PRESSED;
+	}
+	if(wd->btns_h & WPAD_BUTTON_B)
+	{
+		stateB = SDL_PRESSED;
+	}
+	
+	if(stateA != lastButtonStateA)
+	{
+		lastButtonStateA = stateA;
+		posted += SDL_PrivateMouseButton(stateA, SDL_BUTTON_LEFT, x, y);
+	}
+	if(stateB != lastButtonStateB)
+	{
+		lastButtonStateB = stateB;
+		posted += SDL_PrivateMouseButton(stateB, SDL_BUTTON_RIGHT, x, y);
+	}
+	
+	
 	Uint8 stateHome = SDL_RELEASED;
 	if(wd->btns_h & WPAD_BUTTON_HOME)
 	{
 		stateHome = SDL_PRESSED;
 	}
-
+	
 	if(stateHome != lastButtonStateHome)
 	{
 		lastButtonStateHome = stateHome;
@@ -572,11 +581,11 @@ void PumpEvents()
 		SDL_memset(&keysym, 0, (sizeof keysym));
 		keysym.sym = SDLK_ESCAPE;
 		SDL_PrivateKeyboard(stateHome, &keysym);*/
-
-		SDL_Event event;
-		event.type = SDL_QUIT;
-		SDL_PushEvent(&event);
-
+		if (stateHome == SDL_RELEASED) {
+			SDL_Event event;
+			event.type = SDL_QUIT;
+			SDL_PushEvent(&event);
+		}
 
 	}
 

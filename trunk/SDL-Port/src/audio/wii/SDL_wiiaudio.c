@@ -37,7 +37,7 @@
 
 #define ALIGNED(x) __attribute__((aligned(x)));
 //#define SAMPLES_PER_DMA_BUFFER 8192
-#define SAMPLES_PER_DMA_BUFFER 2048
+#define SAMPLES_PER_DMA_BUFFER 4096
 
 typedef Uint32 Sample;
 typedef Sample DMABuffer[SAMPLES_PER_DMA_BUFFER];
@@ -50,6 +50,7 @@ static Sample		silence[SAMPLES_PER_DMA_BUFFER] ALIGNED(32);
 // Called whenever more audio data is required.
 static void StartDMA(void)
 {
+	
 	// Is the device ready?
 	if (current_audio && (!current_audio->paused))
 	{
@@ -102,7 +103,7 @@ static void StartDMA(void)
 		}
 
 
-		AUDIO_StopDMA();
+		
 		// Set up the DMA.
 		AUDIO_InitDMA((Uint32) &(*dma_buffer)[0], sizeof(DMABuffer));
 
@@ -114,7 +115,7 @@ static void StartDMA(void)
 	}
 	else
 	{
-	    	AUDIO_StopDMA();
+		AUDIO_StopDMA();
 		// Set up the DMA.
 		AUDIO_InitDMA((Uint32) silence, sizeof(silence));
 		DCFlushRange(silence, sizeof(silence));
@@ -127,7 +128,7 @@ static void StartDMA(void)
 static int WIIAUD_OpenAudio(_THIS, SDL_AudioSpec *spec)
 {
 	// Set up actual spec.
-	spec->freq		= 32000;
+	spec->freq		= 48000;
 	spec->format	= AUDIO_S16MSB;
 	spec->channels	= 2;
 	spec->samples	= SAMPLES_PER_DMA_BUFFER;
@@ -136,7 +137,7 @@ static int WIIAUD_OpenAudio(_THIS, SDL_AudioSpec *spec)
 
 	// Initialise the Wii side of the audio system.
 	AUDIO_Init(0);
-	AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
+	AUDIO_SetDSPSampleRate(AI_SAMPLERATE_48KHZ);
 	AUDIO_RegisterDMACallback(StartDMA);
 
 	// Start the first chunk of audio playing.

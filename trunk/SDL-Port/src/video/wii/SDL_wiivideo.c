@@ -255,6 +255,13 @@ SDL_Surface *WII_SetVideoMode(_THIS, SDL_Surface *current,
 		this->hidden->back_buffer = NULL;
 	}
 
+	if (this->hidden->tmp_buffer)
+	{
+		SDL_free(this->hidden->tmp_buffer);
+		this->hidden->tmp_buffer = NULL;
+	}
+
+
 	// Allocate the new buffer.
 	this->hidden->back_buffer = SDL_malloc(width * height * bytes_per_pixel);
 	if (!this->hidden->back_buffer )
@@ -263,18 +270,32 @@ SDL_Surface *WII_SetVideoMode(_THIS, SDL_Surface *current,
 		return(NULL);
 	}
 
+	this->hidden->tmp_buffer = SDL_malloc((width+4) * (height+4) * bytes_per_pixel);
+	if (!this->hidden->tmp_buffer )
+	{
+		SDL_free(this->hidden->back_buffer);
+		this->hidden->back_buffer = NULL;
+		SDL_SetError("Couldn't allocate buffer for requested mode");
+		return(NULL);
+	}
+
+	
 
 	/* Allocate the new pixel format for the screen */
 	if (!SDL_ReallocFormat(current, bpp, r_mask, g_mask, b_mask, 0))
 	{
 		SDL_free(this->hidden->back_buffer);
 		this->hidden->back_buffer = NULL;
+		SDL_free(this->hidden->tmp_buffer);
+		this->hidden->tmp_buffer = NULL;
+
 		SDL_SetError("Couldn't allocate new pixel format for requested mode");
 		return(NULL);
 	}
 
 	// Clear the back buffer.
 	SDL_memset(this->hidden->back_buffer, 0, width * height * bytes_per_pixel);
+	SDL_memset(this->hidden->tmp_buffer, 0, width * height * bytes_per_pixel);
 
 	/* Set up the new mode framebuffer */
 	//current->flags =  SDL_DOUBLEBUF |( flags & SDL_FULLSCREEN);
@@ -348,9 +369,26 @@ static void WII_FlipHWSurface(_THIS, SDL_Surface *surface)
 
 }
 
+Uint32 blur(Uint32 now, Uint32 above, Uint32 below)
+{
+	const Uint32 R = 0xff000000;
+	const Uint32 G = 0x00ff0000;
+	const Uint32 B = 0x0000ff00;
+	
+	int  r = ((((now  & R)>>24)<<1) + ((above & R)>>24) + ((below & R)>>24))>>2;
+	int  g = ((((now  & G)>>16)<<1) + ((above & G)>>16) + ((below & G)>>16))>>2;
+	int  b = ((((now  & B)>>8)<<1) + ((above & B)>>8) + ((below & B)>>8))>>2;
+
+	if (r>255) r = 255;
+	if (g>255) g = 255;
+	if (b>255) b = 255;
+	return r << 24 | g <<16 | b <<8;
+}
+
 static void UpdateRect(_THIS, const SDL_Rect* const rect)
 {
 	const SDL_Surface* const screen = this->screen;
+
 	if (screen)
 	{
 		// Constants.
@@ -370,6 +408,34 @@ static void UpdateRect(_THIS, const SDL_Rect* const rect)
 		const Uint8*		src_row_start			= &hidden->back_buffer[(y * src_pitch) + (x * src_bytes_per_pixel)];
 		const Uint8* 		src_row_end				= src_row_start + (w * src_bytes_per_pixel);
 		Wii_Y1CBY2CR*	dst_row_start			= &(*frame_buffer)[y * magnification][(x * magnification) / 2];
+
+
+		Uint32* src = (Uint32*)&hidden->back_buffer[(y * src_pitch) + (x * src_bytes_per_pixel)];
+
+		Uint32* dst = (Uint32*)&hidden->tmp_buffer[(y * screen->w) + x ];
+
+
+		if (src_bytes_per_pixel==4) {
+			int i,j;			
+			for (i=0; i<h; i++) {
+				Uint32* srctmp = src;
+				Uint32* dsttmp = dst;
+				for (j=0; j<w; j++) {
+					register int above = (i<=0)?0:src[-screen->w];
+					register int below = (i>=screen->h-1)?0:src[screen->w];
+					*dst = blur(*src,above,below);
+					//*dst = *src;
+					src++;
+					dst++;
+				}
+				src = srctmp + screen->w;
+				dst = dsttmp + screen->w;
+			}
+		}
+
+
+		src_row_start			= &hidden->tmp_buffer[(y * screen->w) + (x)];
+		src_row_end				= src_row_start + (w * src_bytes_per_pixel);
 
 		// Update each row.
 		while (dst_row_start != last_dst_row)
