@@ -34,7 +34,7 @@ $(LIB_DIR)/libSDL_gfx.a: $(OBJS)
 # How to copy the header file
 headers: 
 	@echo Copy headers to $(INCLUDE_DIR)
-	@-mkdir -p $(dir $@)
+	@-mkdir -p $(INCLUDE_DIR)
 	@cp $(wildcard $(SRC_DIR)/*.h) $(INCLUDE_DIR)
 
 # Compilation flags.
