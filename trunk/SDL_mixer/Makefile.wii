@@ -63,19 +63,19 @@ $(INCLUDE_DIR)/SDL_mixer.h: $(SRC_DIR)/SDL_mixer.h
 
 # Compilation flags.
 COMMON_FLAGS	:= -g -O2 -mrvl -Wall $(MACHDEP)
-INCLUDES		:= -Iinclude -I$(DEVKITPRO)/libogc/include -I$(DEVKITPRO)/libSDL/include -Isrc/mikmod -Isrc/timidity
+INCLUDES		:= -Iinclude -I$(DEVKITPRO)/libogc/include -I$(DEVKITPRO)/libSDL/include -I$(DEVKITPRO)/libsmpeg/include -Isrc/mikmod -Isrc/timidity
 # -include sys/wait.h 
 # -include sys/syslimits.h
 # -Isrc/native_midi
-DEFINES			:= -DGEKKO -DDEBUG_ERROR -DDEBUG_TIMERS -DDEBUG_THREADS -DDEBUG_BUILD -DDEBUG_CONVERT -DWAV_MUSIC -DMOD_MUSIC -DMID_MUSIC -DUSE_TIMIDITY_MIDI
+DEFINES			:= -DGEKKO -DDEBUG_ERROR -DDEBUG_TIMERS -DDEBUG_THREADS -DDEBUG_BUILD -DDEBUG_CONVERT -DWAV_MUSIC -DMOD_MUSIC -DMID_MUSIC -DUSE_TIMIDITY_MIDI -DMP3_MUSIC
 # -DUSE_NATIVE_MIDI
 # -DOGG_MUSIC 
-# -DMP3_MUSIC
+# 
 #   -DCMD_MUSIC
 CFLAGS			:= $(COMMON_FLAGS) $(INCLUDES) $(DEFINES)
 
 # Test link flags.
-LDFLAGS			:= $(COMMON_FLAGS) -L$(LIB_DIR) -L$(DEVKITPRO)/libSDL/lib -L$(DEVKITPRO)/libogc/lib/wii -lSDL_mixer -lSDL -lfat -lwiiuse -lbte -logc -lm
+LDFLAGS			:= $(COMMON_FLAGS) -L$(LIB_DIR) -L$(DEVKITPRO)/libSDL/lib -L$(DEVKITPRO)/libogc/lib/wii -L$(DEVKITPRO)/libsmpeg/lib -lSDL_mixer -lsmpeg -lSDL -lfat -lwiiuse -lbte -logc -lm
 
 # How to link an ELF.
 $(TEST_OBJ_DIR)/%.elf: $(TEST_OBJ_DIR)/%.o $(LIB_DIR)/libSDL_mixer.a $(DEVKITPRO)/libSDL/lib/libSDL.a
