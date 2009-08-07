@@ -148,9 +148,66 @@ void CheckWiiMote0()
 	}
 	lastcheck = currtime;
 
-		WPAD_ScanPads();
-		WPADData *wd = WPAD_Data(0);	
+	WPAD_ScanPads();
+	WPADData *wd = WPAD_Data(0);	
 
+	int button[2] = { 0, 0 };
+
+	expansion_t exp;
+	
+	WPAD_Expansion(0,&exp);
+	if (exp.type == EXP_NUNCHUK) {
+
+		// Joystick ang is 0 when pointing up and increases clockwise.  We want standard polar.
+		float deg = exp.nunchuk.js.ang > 90.0f ? 450.0f - exp.nunchuk.js.ang : 90.0f - exp.nunchuk.js.ang;
+		float theta = (deg / 180.0)*(M_PI);
+		float r = exp.nunchuk.js.mag;
+		r = r > .9f ? 1.0f : r / .9f;
+		float x, y;
+
+		if (deg > 315.0f || deg <= 45.0f) {
+			x = r;
+			y = r * tan(theta);
+		} else if (deg > 45.0f && deg <= 135.0f) {
+			y = r;
+			x = r / tan(theta);
+		} else if (deg > 135.0f && deg <= 225.0f) {
+			x = -r;
+			y = -r * tan(theta);
+		} else  /* if (deg > 225.0f && deg <= 315.0f) */ {
+			y = -r;
+			x = -r / tan(theta);
+		}
+				
+		// Push things out to the corners
+		x /= 0.9f;
+		y /= 0.9f;
+
+		// Flip y
+		y *= -1.0f;
+
+		// Clip
+		if (x > 1.0f) x = 1.0f;
+		if (x < -1.0f) x = -1.0f;
+		if (y > 1.0f) y = 1.0f;
+		if (y < -1.0f) y = -1.0f;
+				
+		if (y > 0.0f) {
+			ypos[0] = PDL_CENTRAL + (int)(y * (PDL_MAX - PDL_CENTRAL));
+		} else {
+			ypos[0] = PDL_CENTRAL + (int)(y * (PDL_CENTRAL - PDL_MIN));
+		}
+
+		if (x > 0.0f) {
+			xpos[0] = PDL_CENTRAL + (int)(x * (PDL_MAX - PDL_CENTRAL));
+		} else {
+			xpos[0] = PDL_CENTRAL + (int)(x * (PDL_CENTRAL - PDL_MIN));
+		}
+
+		button[0] = (WPAD_ButtonsHeld(0)&(WPAD_BUTTON_A | WPAD_NUNCHUK_BUTTON_C));
+		button[1] = (WPAD_ButtonsHeld(0)&(WPAD_NUNCHUK_BUTTON_Z | WPAD_BUTTON_B));
+	} else {
+	
 		int down = wd->btns_h & (WPAD_BUTTON_DOWN|WPAD_BUTTON_UP|WPAD_BUTTON_LEFT|WPAD_BUTTON_RIGHT);
 		
 
@@ -181,8 +238,8 @@ void CheckWiiMote0()
 					}
 					if ((keynum / 3) != 1) {
 						ykeys++;
-					ytotal +=
-						keyvalue[keynum].y;
+						ytotal +=
+							keyvalue[keynum].y;
 					}
 				}
 				keynum++;
@@ -202,21 +259,23 @@ void CheckWiiMote0()
 			ypos[0] = PDL_CENTRAL;
 		}
 
-		if ((wd->btns_h & WPAD_BUTTON_2) && !joybutton[0]) {
-			buttonlatch[0] = BUTTONTIME;
-			gamecube_joypad_enabled = 0;
-		}
+		button[0] = (wd->btns_h & WPAD_BUTTON_2);
+		button[1] = (wd->btns_h & WPAD_BUTTON_1);
+	}
 
-		joybutton[0] = (wd->btns_h & WPAD_BUTTON_2);
+	if (button[0] && !joybutton[0]) {
+		buttonlatch[0] = BUTTONTIME;
+		gamecube_joypad_enabled = 0;
+	}
 
-		if ((wd->btns_h & WPAD_BUTTON_1) && !joybutton[1]) {
-			buttonlatch[1] = BUTTONTIME;
-			gamecube_joypad_enabled =0;
-		}
+	joybutton[0] = button[0];
 
-		joybutton[1] = (wd->btns_h & WPAD_BUTTON_1);
-	
-	
+	if (button[1] && !joybutton[1]) {
+		buttonlatch[1] = BUTTONTIME;
+		gamecube_joypad_enabled =0;
+	}
+
+	joybutton[1] = button[1];
 }
 
 
